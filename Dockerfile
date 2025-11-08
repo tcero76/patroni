@@ -103,6 +103,16 @@ RUN set -ex \
     && find /usr/lib/python3/dist-packages -name '*test*' | xargs rm -fr \
     && find /lib/$(uname -m)-linux-gnu/security -type f ! -name pam_env.so ! -name pam_permit.so ! -name pam_unix.so -delete
 
+RUN set -eux; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends gnupg wget ca-certificates lsb-release; \
+    CODENAME=$(grep VERSION_CODENAME /etc/os-release | cut -d= -f2); \
+    echo "Detected Debian codename: $CODENAME"; \
+    echo "deb [signed-by=/usr/share/keyrings/timescaledb.gpg] https://packagecloud.io/timescale/timescaledb/debian/ ${CODENAME} main" > /etc/apt/sources.list.d/timescaledb.list; \
+    wget --quiet -O - https://packagecloud.io/timescale/timescaledb/gpgkey | gpg --dearmor -o /usr/share/keyrings/timescaledb.gpg; \
+    apt-get update
+
+RUN apt install -y timescaledb-2-postgresql-17 postgresql-client-17
 # perform compression if it is necessary
 ARG COMPRESS
 RUN if [ "$COMPRESS" = "true" ]; then \
@@ -169,7 +179,7 @@ RUN sed -i 's/env python/&3/' /patroni*.py \
     && if [ "$COMPRESS" = "true" ]; then chmod u+s /usr/bin/sudo; fi \
     && chmod +s /bin/ping \
     && chown -R postgres:postgres "$PGHOME" /run /etc/haproxy
-
+COPY ./after_init.sh /usr/local/bin/after_init.sh
 USER postgres
 
 ENTRYPOINT ["/bin/sh", "/entrypoint.sh"]

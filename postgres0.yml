@@ -50,6 +50,7 @@ bootstrap:
   # and all other cluster members will use it as a `global configuration`.
   # WARNING! If you want to change any of the parameters that were set up
   # via `bootstrap.dcs` section, please use `patronictl edit-config`!
+  post_init: "/usr/local/bin/after_init.sh"
   dcs:
     ttl: 30
     loop_wait: 10
@@ -72,6 +73,7 @@ bootstrap:
       #  - hostssl all all 0.0.0.0/0 md5
 #      use_slots: true
       parameters:
+        shared_preload_libraries: 'timescaledb'
 #        wal_level: hot_standby
 #        hot_standby: "on"
 #        max_connections: 100
